@@ -16,9 +16,9 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.jbmotos.app.databinding.ActivityMainBinding;
-import com.jbmotos.app.main.service.ServicesScheduleManager;
 import com.jbmotos.app.session.LoginOverlayActivity;
 import com.jbmotos.app.session.SessionManager;
+import com.jbmotos.app.session.User_Admin;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
@@ -39,33 +39,52 @@ public class MainActivity extends AppCompatActivity {
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
                         binding.bottomNavigationView.setSelectedItemId(R.id.frag_home);
-                        replaceFragment(new FragmentHome());
+                        if (sessionManager.getUserIfAdmin() == null) {
+                            replaceFragment(new FragmentHome());
+                        } else {
+                            replaceFragment(new FragmentHomeAdmin());
+                        }
                     }
                 }
         );
 
         if (sessionManager.isLoggedIn()) {
             binding.bottomNavigationView.setSelectedItemId(R.id.frag_home);
-            replaceFragment(new FragmentHome());
+            if (sessionManager.getUserIfAdmin() == null) {
+                replaceFragment(new FragmentHome());
+            } else {
+                replaceFragment(new FragmentHomeAdmin());
+            }
         } else {
             binding.bottomNavigationView.setSelectedItemId(R.id.frag_services);
-            replaceFragment(new FragmentStore());
+            if (sessionManager.getUserIfAdmin() == null) {
+                replaceFragment(new FragmentServices());
+            } else {
+                replaceFragment(new FragmentServicesAdmin());
+            }
         }
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.frag_home) {
                 if (sessionManager.isLoggedIn()) {
-                    replaceFragment(new FragmentHome());
+                    User_Admin adm = sessionManager.getUserIfAdmin();
+                    if (adm == null) {
+                        replaceFragment(new FragmentHome());
+                    } else {
+                        replaceFragment(new FragmentHomeAdmin());
+                    }
                 } else {
                     Intent intent = new Intent(this, LoginOverlayActivity.class);
                     loginLauncher.launch(intent);
                     return false;
                 }
-            } /*else if (itemId == R.id.frag_store) {
-                replaceFragment(new FragmentStore());
-            }*/ else if (itemId == R.id.frag_services) {
-                replaceFragment(new FragmentServices());
+            } else if (itemId == R.id.frag_services) {
+                if (sessionManager.getUserIfAdmin() == null) {
+                    replaceFragment(new FragmentServices());
+                } else {
+                    replaceFragment(new FragmentServicesAdmin());
+                }
             } else if (itemId == R.id.frag_contact) {
                 replaceFragment(new FragmentContact());
             } else {

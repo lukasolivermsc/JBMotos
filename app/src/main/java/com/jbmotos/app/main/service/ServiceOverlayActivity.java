@@ -23,9 +23,11 @@ import com.applandeo.materialcalendarview.exceptions.OutOfDateRangeException;
 import com.google.android.flexbox.FlexboxLayout;
 import com.google.android.material.button.MaterialButton;
 import com.jbmotos.app.R;
+import com.jbmotos.app.database.AppDatabase;
+import com.jbmotos.app.database.DatabaseClient;
 import com.jbmotos.app.main.motorcycle.Motorcycle;
 import com.jbmotos.app.session.SessionManager;
-import com.jbmotos.app.session.User;
+import com.jbmotos.app.session.User_Regular;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -50,12 +52,11 @@ public class ServiceOverlayActivity extends AppCompatActivity {
     private Calendar selectedDay;
     private CalendarView calendarView;
     private static final String timeZoneTag = "America/Sao_Paulo";
-    private final ServicesScheduleManager servicesScheduleManager = ServicesScheduleManager.getInstance();
     private Pair<Calendar, Calendar> minAndMaxDates;
 
     public ServiceOverlayActivity() {
-        User user = SessionManager.getInstance(getBaseContext()).getUser();
-        this.motorcycleList = user == null ? new ArrayList<>() : user.getMotorcycles();
+        User_Regular userRegular = SessionManager.getInstance(getBaseContext()).getUserIfRegular();
+        this.motorcycleList = userRegular == null ? new ArrayList<>() : userRegular.getMotorcycles(getBaseContext());
     }
 
     @Override
@@ -95,14 +96,17 @@ public class ServiceOverlayActivity extends AppCompatActivity {
                 final String selectedHourString = selectedHour.getText().toString();
                 final LocalDate date = selectedDay.getTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-                ServiceScheduled serviceScheduled = new ServiceScheduled(referencedService,
-                        LocalDateTime.of(date, LocalTime.parse(selectedHourString, DateTimeFormatter.ofPattern("HH:mm"))));
-                if (selectedMotorcycle.scheduleService(serviceScheduled)) {
-                    SessionManager.getInstance(getApplicationContext()).saveUser();
-                    servicesScheduleManager.scheduleService(serviceScheduled);
+                ServiceScheduledDao serviceScheduledDao = DatabaseClient.getInstance(getBaseContext()).getAppDatabase().serviceScheduledDao();
+                serviceScheduledDao.insert(new ServiceScheduled(referencedService, selectedMotorcycle,
+                        LocalDateTime.of(date, LocalTime.parse(selectedHourString, DateTimeFormatter.ofPattern("HH:mm")))));
+                setResult(RESULT_OK);
+                finish();
+                /*if (selectedMotorcycle.scheduleService(serviceScheduled)) {
+                    SessionManager.getInstance(getBaseContext()).saveUser();
+                    ServicesScheduleManager.scheduleService(serviceScheduled);
                     setResult(RESULT_OK);
                     finish();
-                }
+                }*/
             }
         });
 
@@ -238,9 +242,23 @@ public class ServiceOverlayActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectedMotorcycle = motorcycleList.get(position);
+                AppDatabase appDatabase = DatabaseClient.getInstance(getBaseContext()).getAppDatabase();
+                ServiceDao serviceDao = appDatabase.serviceDao();
+                ServiceScheduledDao serviceScheduledDao = appDatabase.serviceScheduledDao();
+
+                boolean bHasSchedule = false;
+                List<ServiceScheduled> serviceScheduledList = serviceScheduledDao.getByMotorcycleIdOrdered(selectedMotorcycle.getId());
+                if (!serviceScheduledList.isEmpty()) {
+                    for (ServiceScheduled serviceScheduled : serviceScheduledList) {
+                         if (serviceScheduled.getServiceId() == referencedService.getId()) {
+                             bHasSchedule = true;
+                             break;
+                         }
+                    }
+                }
 
                 //Se a moto já tiver agendado esse serviço, desabilitar botões, se não, rehabilitá-los
-                if (selectedMotorcycle.isServiceScheduled(referencedService)) {
+                if (bHasSchedule) {
                     setCalendarViewUnselectable();
 
                     if (selectedHour != null) {
@@ -288,7 +306,7 @@ public class ServiceOverlayActivity extends AppCompatActivity {
             }
         }
 
-        Map<LocalDate, List<Pair<LocalTime, LocalTime>>> unavailableMap = servicesScheduleManager.getUnavailableDateTimes();
+        Map<LocalDate, List<Pair<LocalTime, LocalTime>>> unavailableMap = ServiceScheduled.getUnavailableDateTimes(getBaseContext());
         List<Pair<LocalTime, LocalTime>> unavailableList = unavailableMap.get(
                 getLocalDateTimeFromCalendar(selectedDay).toLocalDate()
         );

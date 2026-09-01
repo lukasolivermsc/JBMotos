@@ -9,9 +9,6 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-import com.jbmotos.app.main.motorcycle.Motorcycle;
-import com.jbmotos.app.main.service.ServiceScheduled;
-import com.jbmotos.app.main.service.ServicesScheduleManager;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -42,8 +39,7 @@ public class SessionManager {
         String userJson = prefs.getString(KEY_USER, null);
         if (userJson != null) {
             Gson gson = createGson();
-            user = gson.fromJson(userJson, User.class);
-            ServicesScheduleManager.getInstance().setScheduledServicesViaUser(user);
+            user = User.CreateUser(gson.fromJson(userJson, User.UserData.class));
         }
     }
 
@@ -56,15 +52,15 @@ public class SessionManager {
     public void saveUser() {
         if (user != null) {
             Gson gson = createGson();
-            String json = gson.toJson(user);
+            String json = gson.toJson(user.getData());
             editor.putString(KEY_USER, json);
             editor.apply();
         }
     }
 
-    public void login(String username) {
+    public void login(User.UserData data) {
         if (isLoggedIn()) return;
-        user = new User(username);
+        user = User.CreateUser(data);
         saveUser();
     }
 
@@ -73,7 +69,6 @@ public class SessionManager {
     }
 
     public void logout() {
-        ServicesScheduleManager.getInstance().resetScheduledServices();
         user = null;
         editor.clear();
         editor.apply();
@@ -83,17 +78,18 @@ public class SessionManager {
         return user;
     }
 
-    public void addMotorcycleToUserAndSave(Motorcycle motorcycle) {
-        user.addMotorcycle(motorcycle);
-        saveUser();
+    public User_Regular getUserIfRegular() {
+        if (user instanceof User_Regular) {
+            return (User_Regular) user;
+        }
+        return null;
     }
 
-    public boolean removeMotorcycleFromUserAndSave(int index) {
-        if (user.removeMotorcycle(index)) {
-            saveUser();
-            return true;
+    public User_Admin getUserIfAdmin() {
+        if (user instanceof User_Admin) {
+            return (User_Admin) user;
         }
-        return false;
+        return null;
     }
 
 

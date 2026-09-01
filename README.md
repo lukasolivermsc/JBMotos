@@ -4,29 +4,30 @@ Aplicativo Android desenvolvido em Java utilizando o Android Studio, criado como
 
 ## 📱 Sobre o projeto
 
-O JB Motos é um aplicativo mobile para uma oficina/loja de motos, com login de usuário, cadastro de motos, agendamento de serviços e catálogo de peças/produtos.
+O JB Motos é um aplicativo mobile para uma oficina de motos, com login diferenciado para clientes e administrador, cadastro de motos, agendamento de serviços e gerenciamento completo do catálogo de serviços pelo admin.
 
 ## 🛠️ Tecnologias utilizadas
 
 - **Linguagem:** Java
 - **IDE:** Android Studio
 - **Plataforma:** Android
-- **Persistência:** Room (SQLite) e SharedPreferences (sessão do usuário via Gson)
+- **Persistência:** Room (SQLite) — serviços, agendamentos e motos
 - **Mapas:** Google Maps SDK
 
 ## ⚙️ Funcionalidades
 
-- Login e gerenciamento de sessão do usuário
-- Cadastro e remoção de motos do usuário
-- Agendamento de serviços por moto (troca de óleo, pneus, revisão, etc.)
-- Catálogo de produtos/peças (loja)
+- Login com dois perfis de usuário: **cliente** e **administrador**
+- Cadastro e remoção de motos do cliente
+- Agendamento de serviços por moto
+- Catálogo de serviços da oficina
+- Painel administrativo: adicionar, editar e gerenciar serviços e agendamentos
 - Tela de contato com localização no mapa e ligação direta
 
 ## 🚀 Como executar
 
 1. Clone este repositório:
    ```bash
-   git clone https://github.com/seu-usuario/JBMotos.git
+   git clone https://github.com/lukasolivermsc/JBMotos
    ```
 2. Abra o projeto no Android Studio.
 3. Configure a chave da API do Google Maps (veja seção abaixo).

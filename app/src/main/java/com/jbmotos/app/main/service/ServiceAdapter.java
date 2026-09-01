@@ -1,5 +1,8 @@
 package com.jbmotos.app.main.service;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +29,15 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
     public ServiceAdapter(List<Service> services, OnServiceClickListener listener) {
         this.serviceList = services;
         this.listener = listener;
+    }
+
+    public List<Service> getServiceList() {
+        return serviceList;
+    }
+
+    public void setServiceList(List<Service> serviceList) {
+        this.serviceList = serviceList;
+        notifyDataSetChanged();
     }
 
     @NonNull

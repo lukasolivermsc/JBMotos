@@ -1,55 +1,46 @@
 package com.jbmotos.app.session;
 
-import com.jbmotos.app.main.motorcycle.Motorcycle;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class User {
-    private String name;
-    private List<Motorcycle> motorcycles;
 
-    public User(String name) {
-        this.name = name;
-        motorcycles = new ArrayList<Motorcycle>();
+    private final UserData data;
+
+    protected User(UserData data) {
+        this.data = data;
+    }
+
+    public static User CreateUser(UserData data) {
+        if (data.isAdmin()) {
+            return new User_Admin(data);
+        } else {
+            return new User_Regular(data);
+        }
+    }
+
+    public UserData getData() {
+        return data;
     }
 
     public String getName() {
-        return name;
+        return data.name;
     }
 
-    public void addMotorcycle(Motorcycle motorcycle) {
-        if (motorcycle == null) return;
-        motorcycles.add(motorcycle);
-    }
+    public static class UserData {
+        private final String name;
 
-    public boolean removeMotorcycle(int index) {
-        if (index < 0 || index >= motorcycles.size()) return false;
-        motorcycles.remove(index);
-        return true;
-    }
-
-    public List<Motorcycle> getMotorcycles() {
-        return motorcycles;
-    }
-
-    public List<Motorcycle> copyMotorcycles() {
-        List<Motorcycle> copies = new ArrayList<>();
-        for (Motorcycle motorcycle : motorcycles) {
-            copies.add(new Motorcycle(motorcycle));
+        public UserData(String name) {
+            if (name.equalsIgnoreCase("Admin") || name.equalsIgnoreCase("adm"))  {
+                this.name = "Admin";
+            } else {
+                this.name = name;
+            }
         }
-        return copies;
-    }
 
-    public final List<String> getBrandAndModelOfAllMotorcycles() {
-        List<String> returnArray = new ArrayList<>(motorcycles.size());
-        for (Motorcycle motorcycle : motorcycles) {
-            returnArray.add(motorcycle.getBrandAndModel());
+        public String getName() {
+            return name;
         }
-        return returnArray;
-    }
 
-    public int getNumOfMotorcycles() {
-        return motorcycles.size();
+        public boolean isAdmin() {
+            return name.equals("Admin");
+        }
     }
 }

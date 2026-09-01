@@ -1,90 +1,48 @@
 package com.jbmotos.app.main.motorcycle;
 
 import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
 
-import com.jbmotos.app.main.service.Service;
-import com.jbmotos.app.main.service.ServiceScheduled;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
+@Entity(tableName = "motorcycles")
 public class Motorcycle {
+    @PrimaryKey(autoGenerate = true)
+    private int id;
+
     private String name;
     private String brand;
-    private List<ServiceScheduled> servicesScheduled = new ArrayList<>();
+    /** Username do dono da moto */
+    private String clientUsername;
 
-    public String getName() {
-        return name;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public String getBrandAndModel() {
-        return getBrand() + " - " + getName();
-    }
-
-    public List<ServiceScheduled> getServicesScheduled() {
-        return Collections.unmodifiableList(servicesScheduled);
-    }
-
-    public List<ServiceScheduled> getServicesScheduledOrdered() {
-        return servicesScheduled.stream()
-                .sorted(Comparator.comparing(ServiceScheduled::getDate))
-                .collect(Collectors.toList());
-    }
-
-    public Motorcycle(String name, String brand) {
+    public Motorcycle(String name, String brand, String clientUsername) {
         this.name = name;
         this.brand = brand;
+        this.clientUsername = clientUsername;
     }
 
-    public Motorcycle(Motorcycle toCopy) {
-        name = toCopy.name;
-        brand = toCopy.brand;
+    @Ignore
+    private Motorcycle() {
+        name = "";
+        brand = "";
     }
 
     public static Motorcycle createEmpty() {
-        return new Motorcycle("Sem motos", "registradas");
+        return new Motorcycle();
     }
 
-    public boolean isServiceScheduled(Service service) {
-        for (ServiceScheduled schedule : servicesScheduled) {
-            if (schedule.getService().equals(service)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public boolean scheduleService(ServiceScheduled toSchedule) {
-        if (isServiceScheduled(toSchedule.getService())) {
-            return false;
-        }
-        servicesScheduled.add(new ServiceScheduled(toSchedule));
-        return true;
-        /*System.out.println("Serviço registrado na " + getBrandAndModel() + ":");
-        for (ServiceScheduled serviceScheduled : servicesScheduled) {
-            System.out.println(serviceScheduled.getService().getName());
-        }*/
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public boolean scheduleService(Service service, LocalDateTime dateTime) {
-        if (isServiceScheduled(service)) {
-            return false;
-        }
-        servicesScheduled.add(new ServiceScheduled(service, dateTime));
-        return true;
-        /*System.out.println("Serviço registrado na " + getBrandAndModel() + ":");
-        for (ServiceScheduled serviceScheduled : servicesScheduled) {
-            System.out.println(serviceScheduled.getService().getName());
-        }*/
-    }
+    public String getBrand() { return brand; }
+    public void setBrand(String brand) { this.brand = brand; }
+    public String getBrandAndModel() { return brand + " - " + name; }
+
+    public String getClientUsername() { return clientUsername; }
+    public void setClientUsername(String clientUsername) { this.clientUsername = clientUsername; }
 
     @NonNull
     @Override

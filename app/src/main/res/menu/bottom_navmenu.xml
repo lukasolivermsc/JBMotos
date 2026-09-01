@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/frag_home"
-        android:title="Minha Moto"
+        android:title="Meu Perfil"
         android:icon="@drawable/baseline_sports_motorsports_24"
         />
     <item

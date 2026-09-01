@@ -10,8 +10,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.jbmotos.app.R;
+import com.jbmotos.app.database.AppDatabase;
+import com.jbmotos.app.database.DatabaseClient;
 import com.jbmotos.app.main.service.Service;
+import com.jbmotos.app.main.service.ServiceDao;
 import com.jbmotos.app.main.service.ServiceScheduled;
+import com.jbmotos.app.main.service.ServiceScheduledDao;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -46,13 +50,16 @@ public class MotorcycleScheduleAdapter extends RecyclerView.Adapter<MotorcycleSc
         holder.scheduleRecyclerView.setLayoutManager(
                 new LinearLayoutManager(holder.itemView.getContext(), LinearLayoutManager.VERTICAL, false));
 
-        List<ServiceScheduled> orderedServices = motorcycle.getServicesScheduledOrdered();
-        if (orderedServices.isEmpty()) {
-            orderedServices = new ArrayList<>(1);
-            orderedServices.add(new ServiceScheduled(new Service("Nada agendado")));
+        AppDatabase appDatabase = DatabaseClient.getInstance(holder.itemView.getContext()).getAppDatabase();
+        ServiceScheduledDao serviceScheduledDao = appDatabase.serviceScheduledDao();
+
+        List<ServiceScheduled> services = serviceScheduledDao.getByMotorcycleIdOrdered(motorcycle.getId());
+        if (services.isEmpty()) {
+            services = new ArrayList<>(1);
+            services.add(new ServiceScheduled(new Service("Nada agendado")));
         }
         holder.scheduleRecyclerView.setAdapter(
-                new MotorcycleVerticalScheduleAdapter(orderedServices));
+                new MotorcycleVerticalScheduleAdapter(services));
     }
 
     @Override
@@ -71,7 +78,7 @@ public class MotorcycleScheduleAdapter extends RecyclerView.Adapter<MotorcycleSc
 
 
 
-    //Lista vertical
+    // Lista vertical
 
     private static class MotorcycleVerticalScheduleAdapter extends RecyclerView.Adapter<MotorcycleVerticalScheduleViewHolder>{
 
@@ -91,13 +98,19 @@ public class MotorcycleScheduleAdapter extends RecyclerView.Adapter<MotorcycleSc
 
         @Override
         public void onBindViewHolder(@NonNull MotorcycleVerticalScheduleViewHolder holder, int position) {
-            ServiceScheduled service = serviceList.get(position);
-            if (service != null) {
-                holder.Name.setText(service.getService().getName());
-                if (service.getDate() != LocalDateTime.MIN) {
-                    holder.Date.setText(service.getDate().format(
-                            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-                    );
+            AppDatabase appDatabase = DatabaseClient.getInstance(holder.itemView.getContext()).getAppDatabase();
+            ServiceDao serviceDao = appDatabase.serviceDao();
+
+            ServiceScheduled serviceScheduled = serviceList.get(position);
+            if (serviceScheduled != null) {
+                Service service = serviceDao.getById(serviceScheduled.getServiceId());
+                if (service != null) {
+                    holder.Name.setText(service.getName());
+                    if (serviceScheduled.getDateTime() != LocalDateTime.MIN) {
+                        holder.Date.setText(serviceScheduled.getDateTime().format(
+                                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                        );
+                    }
                 }
             }
         }

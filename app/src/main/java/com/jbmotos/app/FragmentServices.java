@@ -31,36 +31,33 @@ import java.util.List;
  */
 public class FragmentServices extends Fragment implements ServiceAdapter.OnServiceClickListener {
 
-    private RecyclerView recyclerView;
-    private ServiceAdapter adapter;
-    private AppDatabase db;
-
-    private ActivityResultLauncher<Intent> serviceOverlayLauncher;
+    protected RecyclerView recyclerView;
+    protected ServiceAdapter adapter;
+    protected AppDatabase db;
+    protected ActivityResultLauncher<Intent> serviceOverlayLauncher;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_services, container, false);
-
-        recyclerView = view.findViewById(R.id.recyclerViewServices);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        db = DatabaseClient.getInstance(getContext()).getAppDatabase();
-        List<Service> serviceList = db.serviceDao().getAllServices();
-        List<Service> servicosTeste = getTestServiceList();
-
-        adapter = new ServiceAdapter(servicosTeste, this);
-        recyclerView.setAdapter(adapter);
-
-        //Botão de confirmar
+        View view = inflater.inflate(getFragmentServicesLayoutId(), container, false);
 
         serviceOverlayLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK) {
+                        adapter.setServiceList(getServiceList());
                     }
                 }
         );
+
+        recyclerView = view.findViewById(getRecyclerViewServicesId());
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        db = DatabaseClient.getInstance(getContext()).getAppDatabase();
+        List<Service> serviceList = getServiceList();
+
+        adapter = new ServiceAdapter(serviceList, this);
+        recyclerView.setAdapter(adapter);
 
         return view;
     }
@@ -74,30 +71,15 @@ public class FragmentServices extends Fragment implements ServiceAdapter.OnServi
         }
     }
 
-    private List<Service> getTestServiceList() {
-        List<Service> servicosTeste = new ArrayList<>();
+    protected int getFragmentServicesLayoutId() {
+        return R.layout.fragment_services;
+    }
 
-        servicosTeste.add(new Service("Troca de óleo", 8990, 30));
-        servicosTeste.add(new Service("Troca de pneu dianteiro", 7990, 20));
-        servicosTeste.add(new Service("Troca de pneu traseiro", 8990, 25));
-        servicosTeste.add(new Service("Alinhamento de rodas", 5900, 45));
-        servicosTeste.add(new Service("Balanceamento de rodas", 4900, 30));
-        servicosTeste.add(new Service("Revisão geral", 29990, 120));
-        servicosTeste.add(new Service("Troca de pastilha de freio", 9900, 40));
-        servicosTeste.add(new Service("Troca de relação (corrente, coroa e pinhão)", 19990, 90));
-        servicosTeste.add(new Service("Troca de cabo de embreagem", 6990, 50));
-        servicosTeste.add(new Service("Troca de cabo de acelerador", 6990, 40));
-        servicosTeste.add(new Service("Troca de vela de ignição", 4990, 20));
-        servicosTeste.add(new Service("Instalação de baú", 7990, 60));
-        servicosTeste.add(new Service("Instalação de alarme", 19990, 90));
-        servicosTeste.add(new Service("Limpeza de bico injetor", 14990, 75));
-        servicosTeste.add(new Service("Troca de amortecedor traseiro", 11990, 60));
-        servicosTeste.add(new Service("Instalação de protetor de motor", 9990, 45));
-        servicosTeste.add(new Service("Troca de disco de freio", 14990, 80));
-        servicosTeste.add(new Service("Troca de fluido de freio", 5990, 30));
-        servicosTeste.add(new Service("Lavagem detalhada premium", 12990, 120));
-        servicosTeste.add(new Service("Inspeção elétrica completa", 15990, 90));
+    protected int getRecyclerViewServicesId() {
+        return R.id.recyclerViewServices;
+    }
 
-        return servicosTeste;
+    protected List<Service> getServiceList() {
+        return db.serviceDao().getAllServices();
     }
 }

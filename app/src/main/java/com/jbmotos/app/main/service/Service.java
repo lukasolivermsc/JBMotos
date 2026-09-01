@@ -8,65 +8,36 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-@Entity
+@Entity(tableName = "services")
 public class Service implements Parcelable {
     @PrimaryKey(autoGenerate = true)
     private int id;
-    private final String name;
-
+    private String name;
     /** Preço em centavos */
     private int price = -1;
-    private String description;
-
+    private String description = "";
     /** Duração em minutos */
     private int duration = 0;
 
-    public int getId() {
-        return id;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public String getName() {
-        return name;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public int getPrice() {
-        return price;
-    }
+    public int getPrice() { return price; }
+    public void setPrice(int price) { this.price = price; }
 
-    public int getDuration() {
-        return duration;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public String getDescription() {
-        return description;
-    }
+    public int getDuration() { return duration; }
+    public void setDuration(int duration) { this.duration = duration; }
 
     /**
      * @param price Preço em centavos
      * @param duration Duração em minutos
      */
-    public Service(int id, String name, int price, int duration, String description) {
-        this.id = id;
-        this.name = name;
-        this.price = price;
-        this.duration = duration;
-        this.description = description;
-    }
-
-    @Ignore
-    public Service(Service service) {
-        id = service.id;
-        name = service.name;
-        price = service.price;
-        duration = service.duration;
-        description = service.description;
-    }
-
-    /**
-     * @param price Preço em centavos
-     * @param duration Duração em minutos
-     */
-    @Ignore
     public Service(String name, int price, int duration, String description) {
         this.name = name;
         this.price = price;
@@ -85,16 +56,13 @@ public class Service implements Parcelable {
         this.duration = duration;
     }
 
-    /**
-     * @param price Preço em centavos
-     * @param duration Duração em minutos
-     */
     @Ignore
-    public Service(int id, String name, int price, int duration) {
-        this.id = id;
-        this.name = name;
-        this.price = price;
-        this.duration = duration;
+    public Service(Service other) {
+        this.id = other.id;
+        this.name = other.name;
+        this.price = other.price;
+        this.duration = other.duration;
+        this.description = other.description;
     }
 
     @Ignore
@@ -116,11 +84,14 @@ public class Service implements Parcelable {
     }
 
 
+    // --- Parcelable Implementation ---
 
-    // Parcelable implementation
+    @Ignore
     protected Service(Parcel in) {
+        id = in.readInt();
         name = in.readString();
         price = in.readInt();
+        description = in.readString();
         duration = in.readInt();
     }
 
@@ -137,14 +108,16 @@ public class Service implements Parcelable {
     };
 
     @Override
-    public int describeContents() {
-        return 0;
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(id);
+        dest.writeString(name);
+        dest.writeInt(price);
+        dest.writeString(description);
+        dest.writeInt(duration);
     }
 
     @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(name);
-        dest.writeInt(price);
-        dest.writeInt(duration);
+    public int describeContents() {
+        return 0;
     }
 }

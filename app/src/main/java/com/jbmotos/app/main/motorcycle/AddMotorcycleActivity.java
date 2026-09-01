@@ -12,6 +12,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.jbmotos.app.R;
+import com.jbmotos.app.database.DatabaseClient;
 import com.jbmotos.app.session.SessionManager;
 
 public class AddMotorcycleActivity extends AppCompatActivity {
@@ -36,7 +37,8 @@ public class AddMotorcycleActivity extends AppCompatActivity {
 
             if (!(name.isEmpty() || brand.isEmpty())) {
                 SessionManager sessionManager = SessionManager.getInstance(getApplicationContext());
-                sessionManager.addMotorcycleToUserAndSave(new Motorcycle(name, brand));
+                MotorcycleDao motorcycleDao = DatabaseClient.getInstance(getApplicationContext()).getAppDatabase().motorcycleDao();
+                motorcycleDao.insert(new Motorcycle(name, brand, sessionManager.getUser().getName()));
                 setResult(RESULT_OK);
                 finish();
             }

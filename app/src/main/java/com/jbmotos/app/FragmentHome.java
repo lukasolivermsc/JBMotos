@@ -25,11 +25,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.jbmotos.app.database.DatabaseClient;
 import com.jbmotos.app.main.motorcycle.AddMotorcycleActivity;
 import com.jbmotos.app.main.motorcycle.Motorcycle;
 import com.jbmotos.app.main.motorcycle.MotorcycleAdapter;
+import com.jbmotos.app.main.motorcycle.MotorcycleDao;
 import com.jbmotos.app.main.motorcycle.MotorcycleScheduleAdapter;
-import com.jbmotos.app.main.service.ServicesScheduleManager;
 import com.jbmotos.app.session.SessionManager;
 
 import java.util.ArrayList;
@@ -84,7 +85,7 @@ public class FragmentHome extends Fragment {
             }
         });
 
-        //Mostrador de motos
+        // Mostrador de motos
 
         indicatorLayout = view.findViewById(R.id.motorcycleIndicatorLayout);
         recyclerView = view.findViewById(R.id.recyclerViewMotorcycles);
@@ -113,14 +114,14 @@ public class FragmentHome extends Fragment {
             }
         });
 
-        //Adicionar e remover motos
+        // Adicionar e remover motos
 
         ActivityResultLauncher<Intent> addMotorcycleLauncher;
         addMotorcycleLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK) {
-                        viewModel.currentIndicatorPosition = sessionManager.getUser().getNumOfMotorcycles() - 1;
+                        viewModel.currentIndicatorPosition = sessionManager.getUserIfRegular().getNumOfMotorcycles(getContext()) - 1;
                         initializeMotorcycleTabs();
                     }
                 }
@@ -136,23 +137,23 @@ public class FragmentHome extends Fragment {
 
         ImageButton removeButton = view.findViewById(R.id.btnRemoveMotorcycle);
         removeButton.setOnClickListener(item-> {
-            if (sessionManager.removeMotorcycleFromUserAndSave(viewModel.currentIndicatorPosition)) {
-                viewModel.currentIndicatorPosition = Math.max(0,
-                    Math.min(
-                        sessionManager.getUser().getNumOfMotorcycles() - 1,
-                        viewModel.currentIndicatorPosition
-                    )
-                );
-                ServicesScheduleManager.getInstance().setScheduledServicesViaUser(sessionManager.getUser());
-                initializeMotorcycleTabs();
-            }
+            List<Motorcycle> motorcycleList = sessionManager.getUserIfRegular().getMotorcycles(getContext());
+            MotorcycleDao motorcycleDao = DatabaseClient.getInstance(getContext()).getAppDatabase().motorcycleDao();
+            motorcycleDao.delete(motorcycleList.get(viewModel.currentIndicatorPosition));
+            viewModel.currentIndicatorPosition = Math.max(0,
+                Math.min(
+                    motorcycleList.size() - 1,
+                    viewModel.currentIndicatorPosition
+                )
+            );
+            initializeMotorcycleTabs();
         });
 
         return view;
     }
 
     private void initializeMotorcycleTabs() {
-        List<Motorcycle> motorcycleList = sessionManager.getUser().getMotorcycles();
+        List<Motorcycle> motorcycleList = sessionManager.getUserIfRegular().getMotorcycles(getContext());
         if (motorcycleList.isEmpty()) {
             motorcycleList = new ArrayList<>(1);
             motorcycleList.add(Motorcycle.createEmpty());

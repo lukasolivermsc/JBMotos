@@ -6,12 +6,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 
-import com.jbmotos.app.FragmentStore;
-import com.jbmotos.app.MainActivity;
 import com.jbmotos.app.R;
-import com.jbmotos.app.main.service.ServicesScheduleManager;
 
 public class LoginOverlayActivity extends AppCompatActivity {
 
@@ -30,8 +26,7 @@ public class LoginOverlayActivity extends AppCompatActivity {
         loginButton.setOnClickListener(v -> {
             String username = usernameInput.getText().toString();
             if (!username.isEmpty()) {
-                sessionManager.login(username);
-                ServicesScheduleManager.getInstance().setScheduledServicesViaUser(sessionManager.getUser());
+                sessionManager.login(new User.UserData(username));
                 setResult(RESULT_OK);
                 finish();
             }
