@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <dimen name="roll_bar_icons_size">65dp</dimen>
-    <dimen name="roll_bar_icons_space_width">20dp</dimen>
-</resources>
