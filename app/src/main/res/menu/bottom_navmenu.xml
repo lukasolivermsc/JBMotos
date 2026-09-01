@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/frag_home"
+        android:title="Minha Moto"
+        android:icon="@drawable/baseline_sports_motorsports_24"
+        />
+    <item
+        android:id="@+id/frag_services"
+        android:title="Serviços"
+        android:icon="@drawable/baseline_miscellaneous_services_24"
+        />
+    <!--
+    <item
+        android:id="@+id/frag_store"
+        android:title="Loja"
+        android:icon="@drawable/baseline_local_grocery_store_24"
+        />
+        -->
+    <item
+        android:id="@+id/frag_contact"
+        android:title="Contato"
+        android:icon="@drawable/baseline_local_phone_24"
+        />
+</menu>
