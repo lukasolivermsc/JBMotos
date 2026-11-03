@@ -4,16 +4,14 @@ import { appColors } from '../../theme';
 import { useSession } from '../../context/SessionContext';
 import { insertMotorcycle } from '../../database/motorcycleDao';
 
-export default function AddMotorcycleModal({ navigation, route }) {
+export default function AddMotorcycleModal({ navigation }) {
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const { user } = useSession();
-  const { onAdded } = route.params ?? {};
 
   async function handleSave() {
     if (!name.trim() || !brand.trim()) return;
     await insertMotorcycle({ name: name.trim(), brand: brand.trim(), clientUsername: user.name });
-    onAdded?.();
     navigation.goBack();
   }
 

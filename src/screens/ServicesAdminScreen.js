@@ -29,7 +29,7 @@ export default function ServicesAdminScreen({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Serviços</Text>
         <TouchableOpacity style={styles.addButton}
-          onPress={() => navigation.navigate('AddServiceModal', { onAdded: loadServices })}>
+          onPress={() => navigation.navigate('AddServiceModal')}>
           <Text style={styles.addButtonText}>+ Adicionar</Text>
         </TouchableOpacity>
       </View>
@@ -38,7 +38,7 @@ export default function ServicesAdminScreen({ navigation }) {
         keyExtractor={item => String(item.id)}
         renderItem={({ item }) => (
           <ServiceAdminCard service={item}
-            onPress={s => navigation.navigate('EditServiceModal', { serviceId: s.id, onSaved: loadServices })} />
+            onPress={s => navigation.navigate('EditServiceModal', { serviceId: s.id })} />
         )}
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum serviço cadastrado.</Text>}

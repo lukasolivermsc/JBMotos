@@ -70,12 +70,10 @@ function ServiceForm({ initialName = '', initialPriceCents = 0, initialDuration 
   );
 }
 
-export function AddServiceModal({ navigation, route }) {
-  const { onAdded } = route.params ?? {};
+export function AddServiceModal({ navigation }) {
 
   async function handleSave({ name, priceInCents, totalMinutes }) {
     await insertService({ name, price: priceInCents, duration: totalMinutes });
-    onAdded?.();
     navigation.goBack();
   }
 
@@ -93,7 +91,7 @@ export function AddServiceModal({ navigation, route }) {
 }
 
 export function EditServiceModal({ navigation, route }) {
-  const { serviceId, onSaved } = route.params ?? {};
+  const { serviceId } = route.params ?? {};
   const [service, setService] = useState(null);
 
   useEffect(() => {
@@ -102,13 +100,11 @@ export function EditServiceModal({ navigation, route }) {
 
   async function handleSave({ name, priceInCents, totalMinutes }) {
     await updateService({ id: serviceId, name, price: priceInCents, duration: totalMinutes });
-    onSaved?.();
     navigation.goBack();
   }
 
   async function handleDelete() {
     await deleteService(serviceId);
-    onSaved?.();
     navigation.goBack();
   }
 
@@ -120,7 +116,7 @@ export function EditServiceModal({ navigation, route }) {
         <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Editar Serviço</Text>
+        <Text style={styles.titleSec}>Editar Serviço</Text>
         <ServiceForm
           initialName={service.name}
           initialPriceCents={service.price}
@@ -139,6 +135,7 @@ const styles = StyleSheet.create({
   closeButton: { position: 'absolute', top: 12, right: 16, padding: 4, zIndex: 1 },
   closeText: { fontSize: 18, color: appColors.textSecondary },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: appColors.textPrimary },
+  titleSec: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: appColors.textSecondary },
   label: { fontSize: 13, fontWeight: '600', color: appColors.textSecondary, marginTop: 12, marginBottom: 4 },
   input: { borderWidth: 1, borderColor: appColors.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16 },
   durationRow: { flexDirection: 'row', gap: 12 },

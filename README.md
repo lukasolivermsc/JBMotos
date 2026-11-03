@@ -12,7 +12,7 @@ O JB Motos é um aplicativo mobile para uma oficina de motos, com login diferenc
 
 - **Framework:** React Native
 - **Navegação:** React Navigation (bottom tabs + stack)
-- **Persistência:** SQLite (`react-native-sqlite-storage`) e AsyncStorage (sessão do usuário)
+- **Persistência:** SQLite (`@op-engineering/op-sqlite`) e AsyncStorage (sessão do usuário)
 - **Mapas:** react-native-maps (Google Maps)
 
 ## ⚙️ Funcionalidades

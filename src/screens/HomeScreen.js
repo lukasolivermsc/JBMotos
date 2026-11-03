@@ -105,7 +105,7 @@ export default function HomeScreen({ navigation }) {
 
       <View style={styles.motorcycleActions}>
         <TouchableOpacity style={styles.actionButton}
-          onPress={() => navigation.navigate('AddMotorcycleModal', { onAdded: loadMotorcycles })}>
+          onPress={() => navigation.navigate('AddMotorcycleModal')}>
           <Text style={styles.actionButtonText}>+ Adicionar moto</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actionButton, styles.actionButtonDanger]}
