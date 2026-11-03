@@ -33,10 +33,7 @@ export default function ServicesScreen({ navigation }) {
       navigation.navigate('LoginModal');
       return;
     }
-    navigation.navigate('ServiceDetailModal', {
-      service,
-      onScheduled: undefined,
-    });
+    navigation.navigate('ServiceDetailModal', { service });
   }
 
   return (

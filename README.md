@@ -19,7 +19,8 @@ O JB Motos é um aplicativo mobile para uma oficina de motos, com login diferenc
 
 - Login com dois perfis de usuário: **cliente** e **administrador**
 - Cadastro de motos do cliente
-- Agendamento de serviços por moto
+- Agendamento de serviços por moto (ao confirmar, o app volta para a Home mostrando a moto agendada)
+- Geração de PDF do agendamento: na Home, o botão "Gerar PDF" cria um comprovante com todos os agendamentos da moto (serviço, data e hora, duração, preço e total) e abre a tela de compartilhar
 - Catálogo de serviços da oficina
 - Painel administrativo: adicionar, editar e gerenciar serviços
 - Tela de contato com localização no mapa e ligação direta

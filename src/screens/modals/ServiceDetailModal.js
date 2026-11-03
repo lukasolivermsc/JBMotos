@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { appColors } from '../../theme';
 import { Picker } from '@react-native-picker/picker';
 import { Calendar } from 'react-native-calendars';
@@ -7,7 +7,6 @@ import { useSession } from '../../context/SessionContext';
 import { getMotorcyclesByUsername } from '../../database/motorcycleDao';
 import { insertSchedule, getUnavailableDateTimes, formatPrice } from '../../database/serviceDao';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 
 // Horários das 8:00 às 18:30, sem 12:xx, de 30 em 30 min
 function generateTimeSlots() {
@@ -25,6 +24,16 @@ function generateTimeSlots() {
 const TIME_SLOTS = generateTimeSlots();
 const LAST_SLOT = TIME_SLOTS[TIME_SLOTS.length - 1]; // '18:00'
 
+// Expediente: fecha às 18:30; almoço das 12:00 às 13:00 (minutos desde 00:00)
+const CLOSING_MINUTES = 18 * 60 + 30;
+const LUNCH_START_MINUTES = 12 * 60;
+const LUNCH_END_MINUTES = 13 * 60;
+
+// Último dia agendável: 3 meses a partir de hoje (à meia-noite local)
+function getMaxDate(now) {
+  return new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+}
+
 function toDateKey(date) {
   // Retorna 'yyyy-mm-dd' no fuso local, evitando offset UTC
   const y = date.getFullYear();
@@ -36,7 +45,7 @@ function toDateKey(date) {
 // Constrói o objeto markedDates para o Calendar:
 // - fins de semana e hoje (se já passou do último slot) → disabled + esmaecido
 // - cobre os próximos 3 meses
-function buildMarkedDates(unavailable) {
+function buildMarkedDates() {
   const marked = {};
   const now = new Date();
   const lastSlotHour = parseInt(LAST_SLOT.split(':')[0], 10);
@@ -46,9 +55,7 @@ function buildMarkedDates(unavailable) {
     now.getHours() > lastSlotHour ||
     (now.getHours() === lastSlotHour && now.getMinutes() >= lastSlotMin);
 
-  // Máximo: 3 meses a partir de hoje
-  const maxDate = new Date(now);
-  maxDate.setMonth(maxDate.getMonth() + 3);
+  const maxDate = getMaxDate(now);
 
   const cursor = new Date(now);
   cursor.setHours(0, 0, 0, 0);
@@ -72,17 +79,18 @@ function buildMarkedDates(unavailable) {
 }
 
 export default function ServiceDetailModal({ navigation, route }) {
-  const { service, onScheduled } = route.params;
+  const { service } = route.params;
   const { user } = useSession();
   const [motorcycles, setMotorcycles] = useState([]);
   const [selectedMotorcycleId, setSelectedMotorcycleId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null); // string 'yyyy-mm-dd'
   const [selectedTime, setSelectedTime] = useState(null);
   const [unavailable, setUnavailable] = useState({});
+  const [saving, setSaving] = useState(false);
 
   const now = new Date();
   const todayKey = toDateKey(now);
-  const maxDateKey = toDateKey(new Date(now.getFullYear(), now.getMonth() + 3, now.getDate()));
+  const maxDateKey = toDateKey(getMaxDate(now));
 
   useFocusEffect(useCallback(() => {
     (async () => {
@@ -94,9 +102,9 @@ export default function ServiceDetailModal({ navigation, route }) {
     })();
   }, [user]));
 
-  // Reconstrói markedDates sempre que unavailable ou selectedDate mudarem
+  // Reconstrói markedDates sempre que selectedDate mudar
   const markedDates = useMemo(() => {
-    const base = buildMarkedDates(unavailable);
+    const base = buildMarkedDates();
 
     // Destaca o dia selecionado
     if (selectedDate) {
@@ -108,7 +116,7 @@ export default function ServiceDetailModal({ navigation, route }) {
     }
 
     return base;
-  }, [unavailable, selectedDate]);
+  }, [selectedDate]);
 
   // Ao trocar de data, limpa o horário selecionado
   function handleDayPress(day) {
@@ -128,21 +136,38 @@ export default function ServiceDetailModal({ navigation, route }) {
     // Se for hoje, bloqueia horários já passados
     if (selectedDate === todayKey && slotStart <= now) return true;
 
+    // Bloqueia serviços que passariam do fechamento ou atravessariam o almoço
+    const startMin = h * 60 + m;
+    const endMin = startMin + service.duration;
+    if (endMin > CLOSING_MINUTES) return true;
+    if (startMin < LUNCH_END_MINUTES && endMin > LUNCH_START_MINUTES) return true;
+
     return intervals.some(({ start, end }) => slotStart < end && slotEnd > start);
   }
 
   async function handleConfirm() {
-    if (!selectedTime || !selectedDate || !selectedMotorcycleId) return;
+    if (saving || !selectedTime || !selectedDate || !selectedMotorcycleId) return;
+    setSaving(true);
     const [h, m] = selectedTime.split(':').map(Number);
     const dateTime = new Date(selectedDate + 'T00:00:00');
     dateTime.setHours(h, m, 0, 0);
-    await insertSchedule({ serviceId: service.id, motorcycleId: selectedMotorcycleId, dateTime });
-    // Avisa a HomeScreen para atualizar os agendamentos do card
-    onScheduled?.();
-    navigation.goBack();
+    try {
+      await insertSchedule({ serviceId: service.id, motorcycleId: selectedMotorcycleId, dateTime });
+    } catch (e) {
+      console.error('Erro ao agendar:', e);
+      setSaving(false);
+      Alert.alert('Erro', 'Não foi possível agendar o serviço.');
+      return;
+    }
+    setSaving(false);
+    // Vai para a Home mostrando a moto que acabou de ser agendada
+    navigation.navigate('Main', {
+      screen: 'Home',
+      params: { focusMotorcycleId: selectedMotorcycleId },
+    });
   }
 
-  const canConfirm = selectedTime && selectedDate && selectedMotorcycleId;
+  const canConfirm = selectedTime && selectedDate && selectedMotorcycleId && !saving;
 
   return (
     <View style={styles.overlay}>
@@ -158,6 +183,11 @@ export default function ServiceDetailModal({ navigation, route }) {
 
           {/* Seletor de moto — estilo padrão do sistema */}
           <Text style={styles.label}>Minha moto</Text>
+          {motorcycles.length === 0 && (
+            <Text style={styles.noMotorcycle}>
+              Cadastre uma moto na Home antes de agendar.
+            </Text>
+          )}
           <View style={styles.pickerWrapper}>
             <Picker
               selectedValue={selectedMotorcycleId}
@@ -264,6 +294,7 @@ const styles = StyleSheet.create({
   calendarWrapper: { borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: appColors.primaryDark, backgroundColor: appColors.background },
   calendar: { backgroundColor: appColors.background },
 
+  noMotorcycle: { color: appColors.secondary, fontSize: 13, marginBottom: 6 },
   pickerWrapper: { borderWidth: 1, borderColor: appColors.primaryDark, borderRadius: 8, overflow: 'hidden' },
 
   timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

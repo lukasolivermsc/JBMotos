@@ -1,8 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, Dimensions, ScrollView,
+  StyleSheet, Dimensions, ScrollView, Alert,
 } from 'react-native';
+import { generateAndShareSchedulePdf } from '../utils/schedulePdf';
 import { appColors } from '../theme';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,8 +50,10 @@ function MotorcycleCard({ motorcycle, refreshKey }) {
   );
 }
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, route }) {
   const { user, logout } = useSession();
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const focusMotorcycleId = route?.params?.focusMotorcycleId;
   const [motorcycles, setMotorcycles] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [scheduleRefreshKey, setScheduleRefreshKey] = useState(0);
@@ -59,6 +62,49 @@ export default function HomeScreen({ navigation }) {
   async function loadMotorcycles() {
     const list = await getMotorcyclesByUsername(user?.name);
     setMotorcycles(list);
+    return list;
+  }
+
+  // Depois de agendar, mostra a moto que acabou de ser agendada
+  useEffect(() => {
+    if (focusMotorcycleId == null) return;
+    (async () => {
+      const list = await loadMotorcycles();
+      const index = list.findIndex(m => m.id === focusMotorcycleId);
+      if (index >= 0) {
+        setCurrentIndex(index);
+        setTimeout(() => {
+          flatListRef.current?.scrollToOffset({ offset: index * width, animated: false });
+        }, 50);
+      }
+      navigation.setParams({ focusMotorcycleId: undefined });
+    })();
+  }, [focusMotorcycleId]);
+
+  async function handleGeneratePdf() {
+    const motorcycle = motorcycles[currentIndex];
+    if (!motorcycle || generatingPdf) return;
+    setGeneratingPdf(true);
+    try {
+      const rows = await getSchedulesByMotorcycleId(motorcycle.id);
+      if (rows.length === 0) return;
+      const schedules = await Promise.all(
+        rows.map(async s => {
+          const service = await getServiceById(s.serviceId);
+          return {
+            ...s,
+            serviceName: service?.name ?? '?',
+            price: service?.price ?? 0,
+            duration: service?.duration ?? 0,
+          };
+        })
+      );
+      await generateAndShareSchedulePdf({ user, motorcycle, schedules });
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível gerar o PDF.');
+    } finally {
+      setGeneratingPdf(false);
+    }
   }
 
   useFocusEffect(useCallback(() => {
@@ -106,11 +152,15 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.motorcycleActions}>
         <TouchableOpacity style={styles.actionButton}
           onPress={() => navigation.navigate('AddMotorcycleModal')}>
-          <Text style={styles.actionButtonText}>+ Adicionar moto</Text>
+          <Text style={styles.actionButtonText}>{'➕\nAdicionar\nMoto'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actionButton, styles.actionButtonDanger]}
           onPress={handleRemoveMotorcycle} disabled={motorcycles.length === 0}>
-          <Text style={styles.actionButtonText}>🗑 Remover</Text>
+          <Text style={styles.actionButtonText}>{'🗑\nRemover\nMoto'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton}
+          onPress={handleGeneratePdf} disabled={motorcycles.length === 0 || generatingPdf}>
+          <Text style={styles.actionButtonText}>{generatingPdf ? '📄\nGerando\n...' : '📄\nGerar\nPDF'}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -137,5 +187,5 @@ const styles = StyleSheet.create({
   motorcycleActions: { flexDirection: 'row', justifyContent: 'center', gap: 12, marginTop: 16, paddingHorizontal: 16 },
   actionButton: { flex: 1, backgroundColor: appColors.primary, padding: 12, borderRadius: 8, alignItems: 'center' },
   actionButtonDanger: { backgroundColor: appColors.primaryDark },
-  actionButtonText: { color: appColors.textLight, fontWeight: 'bold' },
+  actionButtonText: { color: appColors.textLight, fontWeight: 'bold', textAlign: 'center' },
 });
